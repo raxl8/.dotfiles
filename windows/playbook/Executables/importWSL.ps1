@@ -4,8 +4,8 @@ $tempDir = Join-Path -Path (Get-SystemDrive) -ChildPath $([System.Guid]::NewGuid
 New-Item -Force -ItemType Directory -Path $tempDir | Out-Null
 Push-Location $tempDir
 
-$url = "https://github.com/nix-community/NixOS-WSL/releases/download/2405.5.4/nixos-wsl.tar.gz"
-$filePath = "$tempDir\nixos-wsl.tar.gz"
+$url = "https://github.com/nix-community/NixOS-WSL/releases/download/2505.7.0/nixos.wsl"
+$filePath = "$tempDir\nixos.wsl"
 
 # Download faster plz
 $ProgressPreference = "SilentlyContinue"

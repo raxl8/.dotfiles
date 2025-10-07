@@ -14,20 +14,8 @@
           "PackageIdentifier": "Discord.Discord"
         },
         {
-          "PackageIdentifier": "Spotify.Spotify"
-        },
-        {
-          "PackageIdentifier": "SlackTechnologies.Slack"
-        },
-        {
           "PackageIdentifier": "MartiCliment.UniGetUI"
-        },
-        {
-					"PackageIdentifier" : "Zoom.Zoom.EXE"
-				},
-        {
-					"PackageIdentifier" : "Valve.Steam"
-				}
+        }
       ],
       "SourceDetails": {
         "Argument": "https://cdn.winget.microsoft.com/cache",

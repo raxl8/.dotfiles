@@ -1,1 +1,8 @@
-{"pinnedList":[{"desktopAppLink":"%APPDATA%\\Microsoft\\Windows\\Start Menu\\UniGetUI.lnk"},{"packagedAppId":"Microsoft.WindowsTerminal_8wekyb3d8bbwe!App"},{"desktopAppLink":"%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Slack Technologies Inc\\Slack.lnk"},{"desktopAppLink":"%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Spotify.lnk"}]}
+{
+  "pinnedList": [
+    {
+      "desktopAppLink": "%APPDATA%\\Microsoft\\Windows\\Start Menu\\UniGetUI.lnk"
+    },
+    { "packagedAppId": "Microsoft.WindowsTerminal_8wekyb3d8bbwe!App" }
+  ]
+}

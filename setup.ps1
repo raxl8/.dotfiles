@@ -22,16 +22,16 @@ Remove-Item -Force .\7zr.exe
 
 $7zipPath = ".\7zip\x64\7za.exe"
 
-Write-Host "Downloading Atlas playbook..."
+Write-Host "Downloading ReviOS playbook..."
 
-$url = "https://github.com/Atlas-OS/Atlas/releases/download/0.4.1/AtlasPlaybook_v0.4.1.apbx"
+$url = "https://github.com/meetrevision/playbook/releases/download/25.10/Revi-PB-25.10.apbx"
 Invoke-WebRequest -Uri $url -OutFile .\playbook.apbx
 & $7zipPath -y x playbook.apbx -oplaybook -pmalte | Out-Null
 Remove-Item -Force .\playbook.apbx
 
 Write-Host "Downloading TrustedUninstaller..."
 
-$url = "https://github.com/Ameliorated-LLC/trusted-uninstaller-cli/releases/download/0.7.7/CLI-Standalone.zip"
+$url = "https://github.com/Ameliorated-LLC/trusted-uninstaller-cli/releases/download/0.8.1/CLI-Standalone.zip"
 Invoke-WebRequest -Uri $url -OutFile .\trusted-uninstaller.zip
 & $7zipPath -y x trusted-uninstaller.zip -oTrustedUninstaller | Out-Null
 Remove-Item -Force .\trusted-uninstaller.zip
@@ -41,13 +41,20 @@ Remove-Item -Force .\7zip -Recurse
 Write-Host "Installing Atlas playbook..."
 
 $playbookOptions = @(
-  "defender-enable"
-  "mitigations-default"
-  "auto-updates-disable"
-  "disable-hibernation"
-  "disable-power-saving"
-  "disable-core-isolation"
-  "uninstall-edge"
+  "enable-defender"
+  "disable-hibernate"
+  "remove-edge"
+  "remove-onedrive"
+  "remove-winsxs-ai"
+  "remove-teams"
+  "remove-appx-photos"
+  "remove-appx-devhome"
+  "remove-appx-xbox"
+  "remove-appx-yourphone"
+  "configure-darkmode"
+  "configure-lcm"
+  "remove-pinned-items-startmenu"
+  "disable-automatic-maintenance"
 )
 .\TrustedUninstaller\TrustedUninstaller.CLI.exe "$((Resolve-Path .\playbook).Path)" @playbookOptions
 

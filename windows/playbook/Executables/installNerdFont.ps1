@@ -5,7 +5,7 @@ $tempDir = Join-Path -Path $systemDrive -ChildPath $([System.Guid]::NewGuid())
 New-Item -Force -ItemType Directory -Path $tempDir | Out-Null
 
 $ProgressPreference = "SilentlyContinue"
-$url = "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/JetBrainsMono.zip"
+$url = "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.4.0/JetBrainsMono.zip"
 Invoke-WebRequest -Uri $url -OutFile "$tempDir\JetBrainsMono.zip"
 
 $localFontsPath = "$tempDir\JetBrainsMono"

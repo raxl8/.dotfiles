@@ -21,4 +21,20 @@
   home.sessionVariables = {
     GOPATH = "${config.home.homeDirectory}/.go";
   };
+
+  xdg.configFile."mise/config.toml" = {
+    force = true;
+    text = ''
+      [tools]
+      go = "latest"
+      node = "20"
+      pnpm = "latest"
+      python = "3.12"
+      rust = "nightly"
+      zig = "0.15"
+
+      [settings]
+      idiomatic_version_file_enable_tools = ["node", "python"]
+    '';
+  };
 }

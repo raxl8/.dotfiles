@@ -18,6 +18,7 @@
     ./neovim.nix
     ./nushell
     ./pipenv.nix
+    ./rust-tools.nix
     ./starship.nix
     # ./tmux.nix
     ./uv.nix

@@ -42,47 +42,54 @@
       url = "github:homebrew/homebrew-bundle";
       flake = false;
     };
+
+    ghostty = {
+      url = "github:ghostty-org/ghostty";
+    };
   };
 
-  outputs = inputs @ {
-    self,
-    nixpkgs,
-    adhesive,
-    nix-darwin,
-    home-manager,
-    nix-homebrew,
-    homebrew-core,
-    homebrew-cask,
-    homebrew-bundle,
-    ...
-  }: let
-    utils = import ./nix/utils.nix {
-      inherit
-        inputs
-        self
-        nixpkgs
-        adhesive
-        nix-darwin
-        home-manager
-        nix-homebrew
-        homebrew-core
-        homebrew-cask
-        homebrew-bundle
-        ;
-    };
-  in {
-    nixosConfigurations = {
-      wsl = utils.mkConfiguration {
-        architecture = "x86_64-linux";
-        configurationFolder = ./nix/configs/wsl;
-        isContainer = true;
+  outputs =
+    inputs@{
+      self,
+      nixpkgs,
+      adhesive,
+      nix-darwin,
+      home-manager,
+      nix-homebrew,
+      homebrew-core,
+      homebrew-cask,
+      homebrew-bundle,
+      ...
+    }:
+    let
+      utils = import ./nix/utils.nix {
+        inherit
+          inputs
+          self
+          nixpkgs
+          adhesive
+          nix-darwin
+          home-manager
+          nix-homebrew
+          homebrew-core
+          homebrew-cask
+          homebrew-bundle
+          ;
+      };
+    in
+    {
+      nixosConfigurations = {
+        wsl = utils.mkConfiguration {
+          architecture = "x86_64-linux";
+          configurationFolder = ./nix/configs/wsl;
+          isContainer = true;
+        };
+      };
+      darwinConfigurations = {
+        darwin = utils.mkDarwinConfiguration {
+          architecture = "aarch64-darwin";
+          configurationFolder = ./nix/configs/darwin;
+        };
       };
     };
-    darwinConfigurations = {
-      darwin = utils.mkDarwinConfiguration {
-        architecture = "aarch64-darwin";
-        configurationFolder = ./nix/configs/darwin;
-      };
-    };
-  };
 }

@@ -2,7 +2,8 @@
   pkgs,
   user,
   ...
-}: {
+}:
+{
   nix = {
     package = pkgs.nixVersions.stable;
     extraOptions = ''
@@ -12,6 +13,6 @@
   };
 
   users.users.${user} = {
-    shell = pkgs.nushell;
+    shell = pkgs.zsh;
   };
 }

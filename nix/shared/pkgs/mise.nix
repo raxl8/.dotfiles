@@ -1,5 +1,8 @@
-{config, ...}: {
+{ config, ... }:
+{
   programs.mise.enable = true;
+
+  programs.mise.enableZshIntegration = true;
 
   programs.mise.enableNushellIntegration = true;
 

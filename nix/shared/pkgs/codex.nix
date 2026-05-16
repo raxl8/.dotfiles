@@ -1,0 +1,4 @@
+{ ... }:
+{
+  programs.codex.enable = true;
+}

@@ -1,4 +1,5 @@
-{...}: {
+{ ... }:
+{
   programs.nushell.extraEnv = ''
     $env.PATH = [
         "/opt/homebrew/bin"

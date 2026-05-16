@@ -1,4 +1,5 @@
-{...}: {
+{ ... }:
+{
   programs.gpg.enable = true;
 
   # PGP settings for headless pinentry

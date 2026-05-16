@@ -1,8 +1,11 @@
 { ... }:
 {
-  programs.zoxide.enable = true;
+  programs.zoxide = {
+    enable = true;
 
-  programs.zoxide.enableNushellIntegration = true;
+    enableNushellIntegration = true;
+    enableZshIntegration = true;
 
-  programs.zoxide.options = [ "--cmd=cd" ];
+    options = [ "--cmd=cd" ];
+  };
 }

@@ -1,6 +1,12 @@
-{ adhesive, ... }:
+{ adhesive, pkgs, ... }:
 {
-  programs.awscli.enable = true;
+  programs.awscli = {
+    enable = true;
 
-  programs.awscli.settings = adhesive.awscli.settings;
+    settings = adhesive.awscli.settings;
+  };
+
+  home.packages = [
+    pkgs.ssm-session-manager-plugin
+  ];
 }

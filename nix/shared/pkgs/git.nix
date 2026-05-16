@@ -2,7 +2,7 @@
 {
   programs.git.enable = true;
 
-  programs.git.extraConfig = {
+  programs.git.settings = {
     credential = {
       credentialStore = "gpg";
     };
@@ -24,7 +24,10 @@
       autoSetupRemote = true;
     };
     init = {
-      defaultBranch = "main";
+      defaultBranch = "master";
+    };
+    fetch = {
+      prune = true;
     };
   };
 }

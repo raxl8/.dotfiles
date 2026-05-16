@@ -4,36 +4,39 @@
   pkgs,
   osConfig,
   ...
-}: let
+}:
+let
   # credits: https://github.com/jaredmontoya/home-manager/commit/0b2179ce3e2627380fcf0d4db3f05c1182d56474
-  hmSessionVars = pkgs.runCommand "hm-session-vars.nu" {} ''
-    echo "if ('__HM_SESS_VARS_SOURCED' not-in \$env) {$(${
-      lib.getExe pkgs.nushell
-    } -c "
-      source ${pkgs.callPackage ./capture-foreign-env.nix {}}
+  hmSessionVars = pkgs.runCommand "hm-session-vars.nu" { } ''
+    echo "if ('__HM_SESS_VARS_SOURCED' not-in \$env) {$(${lib.getExe pkgs.nushell} -c "
+      source ${pkgs.callPackage ./capture-foreign-env.nix { }}
       open ${config.home.sessionVariablesPackage}/etc/profile.d/hm-session-vars.sh | capture-foreign-env | to nuon
     ") | load-env}" >> "$out"
   '';
   nixEnvironmentVars =
-    pkgs.runCommand "nix-environment-vars.nu" {
-      USER = config.home.username;
-      HOME = config.home.homeDirectory;
-    } ''
-      echo "if ('__NIX_DARWIN_SET_ENVIRONMENT_DONE' not-in \$env) {$(${
-        lib.getExe pkgs.nushell
-      } -c "
-        source ${pkgs.callPackage ./capture-foreign-env.nix {}}
-        open ${osConfig.system.build.setEnvironment} | capture-foreign-env | to nuon
-      ") | load-env}" >> "$out"
-    '';
-  inherit (config.lib.file) mkOutOfStoreSymlink;
-in {
+    pkgs.runCommand "nix-environment-vars.nu"
+      {
+        USER = config.home.username;
+        HOME = config.home.homeDirectory;
+      }
+      ''
+        echo "if ('__NIX_DARWIN_SET_ENVIRONMENT_DONE' not-in \$env) {$(${lib.getExe pkgs.nushell} -c "
+          source ${pkgs.callPackage ./capture-foreign-env.nix { }}
+          open ${osConfig.system.build.setEnvironment} | capture-foreign-env | to nuon
+        ") | load-env}" >> "$out"
+      '';
+in
+{
   programs.nushell = {
     enable = true;
 
     extraConfig = ''
       $env.config = {
         show_banner: false
+        history: {
+          file_format: sqlite
+          isolation: true
+        }
         edit_mode: vi
         keybindings: [
           {
@@ -43,7 +46,7 @@ in {
             mode: [emacs, vi_insert, vi_normal]
             event: {
               send: executehostcommand
-              cmd: "${pkgs.callPackage ./zellij-sessionizer.nix {}} $env.GIT_REPOS_HOME"
+              cmd: "${pkgs.callPackage ./zellij-sessionizer.nix { }} $env.GIT_REPOS_HOME"
             }
           }
         ]

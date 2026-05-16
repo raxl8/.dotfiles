@@ -1,0 +1,18 @@
+{
+  "preferences": {
+    "menuBarEnabled": false,
+    "quickEntryShortcut": "off",
+    "ccBranchPrefix": "",
+    "coworkScheduledTasksEnabled": true,
+    "ccdScheduledTasksEnabled": true,
+    "sidebarMode": "epitaxy",
+    "bypassPermissionsModeEnabled": true,
+    "coworkWebSearchEnabled": true,
+    "epitaxyPrefs": {
+      "cc-landing-worktree-enabled": false,
+      "cc-landing-draft-permission-mode": "plan",
+      "claude-code-preferred-editor": "vscode",
+      "epitaxy-pr-create-mode": "create"
+    }
+  }
+}

@@ -1,0 +1,44 @@
+model = "gpt-5.5"
+model_reasoning_effort = "high"
+personality = "pragmatic"
+plan_mode_reasoning_effort = "high"
+
+[mcp_servers.aws-api]
+command = "uvx"
+args = ["awslabs.aws-api-mcp-server@latest"]
+
+[mcp_servers.aws-docs]
+command = "uvx"
+args = ["awslabs.aws-documentation-mcp-server@latest"]
+
+[features]
+shell_snapshot = true
+multi_agent = true
+memories = true
+
+[plugins."github@openai-curated"]
+enabled = true
+
+[plugins."computer-use@openai-bundled"]
+enabled = true
+
+[plugins."documents@openai-primary-runtime"]
+enabled = true
+
+[plugins."spreadsheets@openai-primary-runtime"]
+enabled = true
+
+[plugins."presentations@openai-primary-runtime"]
+enabled = true
+
+[plugins."slack@openai-curated"]
+enabled = true
+
+[plugins."browser@openai-bundled"]
+enabled = true
+
+[plugins."chrome@openai-bundled"]
+enabled = true
+
+[projects."/Users/alex/git/.dotfiles"]
+trust_level = "trusted"

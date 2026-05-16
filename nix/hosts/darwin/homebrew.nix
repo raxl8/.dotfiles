@@ -13,7 +13,6 @@
     brews = [
       "cloudflared"
       "glab"
-      "mas"
       "mktorrent"
       "mpv"
       "pkgconf"
@@ -89,20 +88,5 @@
       "wispr-flow"
       "zoom"
     ];
-    masApps = {
-      "Dropover" = 1355679052;
-      "Hand Mirror" = 1502839586;
-      "Keynote" = 409183694;
-      "Numbers" = 409203825;
-      "Pages" = 409201541;
-      "Parcel 2" = 375589283;
-      "PDFgear" = 6469021132;
-      "PreviewText" = 1660037028;
-      "ScreenBrush" = 1233965871;
-      "Telegram" = 747648890;
-      "WhatsApp" = 310633997;
-      "Windows App" = 1295203466;
-      "Xcode" = 497799835;
-    };
   };
 }

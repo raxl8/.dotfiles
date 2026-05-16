@@ -1,0 +1,20 @@
+{
+    "claudeCode.preferredLocation": "panel",
+    "python.languageServer": "None",
+    "extensions.ignoreRecommendations": true,
+    "git.openRepositoryInParentFolders": "never",
+    "explorer.confirmDelete": false,
+    "python.defaultInterpreterPath": "/Users/alex/.local/share/mise/installs/python/3.14.2/bin/python",
+    "git.enableSmartCommit": true,
+    "extensions.experimental.affinity": {
+        "asvetliakov.vscode-neovim": 1
+    },
+    "git.autofetch": true,
+    "git.confirmSync": false,
+    "python.createEnvironment.trigger": "off",
+    "terminal.integrated.mouseWheelScrollSensitivity": 3,
+    "claudeCode.disableLoginPrompt": true,
+    "chat.disableAIFeatures": true,
+    "security.promptForLocalFileProtocolHandling": false,
+    "workbench.startupEditor": "none"
+}

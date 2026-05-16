@@ -60,8 +60,6 @@
     harddisk = 20;
   };
 
-  programs.zsh.enable = true;
-
   environment.systemPackages = with pkgs; [
     gnutar
     xz

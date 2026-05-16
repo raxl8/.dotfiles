@@ -2,13 +2,6 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    systems.url = "github:nix-systems/default";
-
-    flake-utils = {
-      url = "github:numtide/flake-utils";
-      inputs.systems.follows = "systems";
-    };
-
     adhesive.url = "git+ssh://git@github.com/raxl8/.dotfiles-adhesive.git?ref=main";
 
     nixos-wsl = {
@@ -42,54 +35,42 @@
       url = "github:homebrew/homebrew-bundle";
       flake = false;
     };
-
-    ghostty = {
-      url = "github:ghostty-org/ghostty";
-    };
   };
 
   outputs =
     inputs@{
       self,
       nixpkgs,
-      adhesive,
-      nix-darwin,
-      home-manager,
-      nix-homebrew,
-      homebrew-core,
-      homebrew-cask,
-      homebrew-bundle,
       ...
     }:
     let
-      utils = import ./nix/utils.nix {
-        inherit
-          inputs
-          self
-          nixpkgs
-          adhesive
-          nix-darwin
-          home-manager
-          nix-homebrew
-          homebrew-core
-          homebrew-cask
-          homebrew-bundle
-          ;
+      inherit (nixpkgs) lib;
+
+      hostLib = import ./nix/lib/hosts.nix {
+        inherit inputs self;
       };
-    in
-    {
-      nixosConfigurations = {
-        wsl = utils.mkConfiguration {
-          architecture = "x86_64-linux";
-          configurationFolder = ./nix/configs/wsl;
+
+      hosts = {
+        wsl = {
+          kind = "nixos";
+          system = "x86_64-linux";
+          path = ./nix/hosts/wsl;
           isContainer = true;
         };
-      };
-      darwinConfigurations = {
-        darwin = utils.mkDarwinConfiguration {
-          architecture = "aarch64-darwin";
-          configurationFolder = ./nix/configs/darwin;
+
+        darwin = {
+          kind = "darwin";
+          system = "aarch64-darwin";
+          path = ./nix/hosts/darwin;
         };
       };
+
+      mkConfigurations =
+        kind:
+        lib.mapAttrs (_: host: hostLib.mkHost host) (lib.filterAttrs (_: host: host.kind == kind) hosts);
+    in
+    {
+      nixosConfigurations = mkConfigurations "nixos";
+      darwinConfigurations = mkConfigurations "darwin";
     };
 }

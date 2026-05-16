@@ -9,7 +9,10 @@
     gawk
   ];
 
-  programs.password-store.enable = true;
+  programs.password-store = {
+    enable = true;
+    settings.PASSWORD_STORE_DIR = "${config.home.homeDirectory}/.password-store";
+  };
 
   home.activation = {
     password-store-init =

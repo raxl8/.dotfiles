@@ -1,4 +1,5 @@
-{...}: {
+{ ... }:
+{
   homebrew = {
     enable = true;
     global = {
@@ -7,21 +8,33 @@
     onActivation = {
       autoUpdate = true;
       upgrade = true;
+      extraFlags = [ "--force" ];
     };
     brews = [
+      "stripe-cli"
       "weasyprint"
     ];
     casks = [
+      "aegisub"
+      "affinity-photo"
       "alcove"
       "android-studio"
       "appcleaner"
+      "bartender"
       "clop"
+      "cursor"
+      "cursor-cli"
       "discord"
-      "docker-desktop"
+      {
+        name = "docker-desktop";
+        args = {
+          no_binaries = true;
+        };
+      }
+      "finicky"
       "firefox"
-      "flux"
-      "ghostty"
-      "ibkr"
+      "flux-app"
+      "ghostty@tip"
       "insomnia"
       "karabiner-elements"
       "latest"
@@ -35,12 +48,11 @@
       "qbittorrent"
       "raycast"
       "rustdesk"
-      "slack"
       "screen-studio"
+      "session-manager-plugin"
       "shottr"
-      "spotify"
+      "slack"
       "tradingview"
-      "vanilla"
       "vlc"
       "zoom"
     ];

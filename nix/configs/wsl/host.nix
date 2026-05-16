@@ -3,7 +3,8 @@
   pkgs,
   user,
   ...
-}: {
+}:
+{
   imports = [
     inputs.nixos-wsl.nixosModules.wsl
   ];

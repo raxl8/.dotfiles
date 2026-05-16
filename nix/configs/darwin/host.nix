@@ -1,10 +1,11 @@
-{pkgs, user, ...}: {
+{ pkgs, user, ... }:
+{
   users.users.${user} = {
     uid = 501;
     home = "/Users/${user}";
   };
 
-  users.knownUsers = [user];
+  users.knownUsers = [ user ];
 
   system.primaryUser = user;
 
@@ -38,8 +39,8 @@
       autohide-time-modifier = 0.0;
       minimize-to-application = true;
       orientation = "right";
-      persistent-apps = [];
-      persistent-others = [];
+      persistent-apps = [ ];
+      persistent-others = [ ];
       show-recents = false;
     };
     controlcenter.BatteryShowPercentage = true;

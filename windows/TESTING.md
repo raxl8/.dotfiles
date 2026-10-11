@@ -18,7 +18,8 @@ Validated October 10–11, 2026 on Windows 11 Pro **26H2**, x64, build **26300.9
 | Continuation protection | `-SkipReviOS` completed on an existing installation. Ordinary-user write attempts against protected scripts/state were denied; owners were Administrators. |
 | Windows SIM | ADK/Windows SIM **10.0.26100.9457** generated a catalog from the exact stock 26H2 Pro image. Tools > Validate Answer File reported **No warnings or errors** for the public `autounattend.xml`. No lab image path was added to the public file. |
 | Optional WSL | Features enabled and Store WSL **3.0.1** installed/updated. NixOS import failed with `HCS_E_HYPERV_NOT_INSTALLED`: WHPX did not expose nested virtualization; TCG exposed SVM/SLAT but Windows rejected the processor with Hyper-V event **48**. Distribution boot and Nix rebuild remain unverified. |
-| Automated checks | All **95 Pester tests** passed. Source parsing under Windows PowerShell 5.1/PowerShell 7, PSScriptAnalyzer error checks and `git diff --check` passed. Coverage includes continuation transitions and native script exit-code propagation. |
+| Automatic playbook download | On the host, Windows PowerShell 5.1 and PowerShell 7 downloaded the public release asset without authentication, matched the upstream SHA256 and reused the verified cache. Preview created no cache. This acquisition change was tested separately from the VM application flow, which used a local playbook. |
+| Automated checks | All **103 Pester tests** passed. Source parsing under Windows PowerShell 5.1/PowerShell 7, PSScriptAnalyzer error checks and `git diff --check` passed. Coverage includes playbook download/cache/failure checks, continuation transitions and native script exit-code propagation. |
 | Secret scans | Gitleaks found no secrets in the repository, its history or the exported tracked files. Lab fixtures and logs remain outside the repository. |
 
 ## Test limits

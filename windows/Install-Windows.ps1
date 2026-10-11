@@ -49,8 +49,7 @@ try {
         Assert-WindowsSetupSupport -Info (Get-WindowsSetupInfo) -InstallWSL:$InstallWSL
         $dependencies = Import-PowerShellDataFile (Join-Path $PSScriptRoot 'config\dependencies.psd1')
         if (-not $SkipReviOS) {
-            if (-not $ReviOSPlaybook) { $ReviOSPlaybook = Join-Path $PSScriptRoot 'downloads\ReviOS-26.10.apbx' }
-            Assert-ReviOSPlaybook -Path $ReviOSPlaybook -Dependency $dependencies.ReviOS
+            $ReviOSPlaybook = Resolve-DotfilesReviOSPlaybook -Path $ReviOSPlaybook -Dependency $dependencies.ReviOS
         }
         $id = [guid]::NewGuid().ToString()
         $RunDirectory = Join-Path $env:ProgramFiles ('DotfilesSetup-' + $id)

@@ -11,6 +11,8 @@
     ReviOS = @{
         Version = '26.10'
         ReleaseUrl = 'https://github.com/meetrevision/playbook/releases/tag/26.10'
+        # Unmodified upstream playbook; attribution/source links are in this release.
+        Url = 'https://github.com/raxl8/.dotfiles/releases/download/revios-26.10/ReviOS-26.10.apbx'
         SHA256 = '7698b591b0b2d46bc99b3ffe9dbd7ec560a3fbee3ec8dee2731caead5546c74a'
         Builds = @(22631, 26100, 26200, 28000, 26300)
     }

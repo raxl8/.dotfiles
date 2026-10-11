@@ -29,9 +29,6 @@ param(
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-if ([string]::IsNullOrWhiteSpace($ReviOSPlaybook)) {
-    $ReviOSPlaybook = Join-Path $PSScriptRoot 'windows\downloads\ReviOS-26.10.apbx'
-}
 Import-Module (Join-Path $PSScriptRoot 'windows\Modules\Dotfiles.Windows.psm1') -Force
 $configRoot = Join-Path $PSScriptRoot 'windows\config'
 # Forward WhatIf explicitly: modules can inherit an invoking script's preferences.

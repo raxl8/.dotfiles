@@ -2,7 +2,7 @@
 
 ## Automatic ReviOS and personal setup
 
-The default **All** stage applies ReviOS through the pinned AME CLI with the committed options, including Enable Defender, then installs your apps/settings. Download the pinned playbook through Revision, finish Windows Update, turn off Tamper Protection in Windows Security as required by AME, then run `setup.ps1 -ReviOSPlaybook <path>` from elevated PowerShell as your own account. Required reboots are scheduled with a 30-second warning. Sign in afterward: setup resumes automatically and launches personal setup without elevation. Saved temporary Defender preferences are reapplied; ReviOS policies may override effective values. See [ReviOS details](OPTIMIZATION.md).
+The default **All** stage downloads the SHA256-verified ReviOS playbook, applies it through the pinned AME CLI with the committed options, including Enable Defender, then installs your apps/settings. Finish Windows Update, turn off Tamper Protection in Windows Security as required by AME, then run `powershell -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1` from elevated PowerShell as your own account. Required reboots are scheduled with a 30-second warning. Sign in afterward: setup resumes automatically and launches personal setup without elevation. Saved temporary Defender preferences are reapplied; ReviOS policies may override effective values. Check Windows Security and re-enable Tamper Protection after completion. See [ReviOS details](OPTIMIZATION.md).
 
 Use Windows 11 with Windows/Store updates installed, WinGet (App Installer), an internet connection and 64-bit PowerShell. Clone with Git; install Git through WinGet first if needed. All stages can start in Windows PowerShell 5.1. The User stage installs PowerShell 7, Git and Terminal before continuing in installed PowerShell 7 with the same options.
 
@@ -21,7 +21,7 @@ All paths inside setup are resolved from the script location, so the current dir
 | `-NoRestart` | All stage: restart manually; continuation still runs after sign-in |
 | `-Stage ReviOS` | Apply only the verified playbook using AME CLI; x64 Windows only; rerun manually after preparation reboot |
 | `-InteractiveReviOS` | With `-Stage ReviOS`, use AME Wizard to select options interactively |
-| `-ReviOSPlaybook` | Playbook path; defaults to `windows/downloads/ReviOS-26.10.apbx` |
+| `-ReviOSPlaybook` | Optional local playbook override; otherwise use the local downloads file, verified cache or automatic release download |
 | `-Stage User` | Apply your apps, font and settings after ReviOS |
 | `-WhatIf` | Preview; no downloads, installations, registry writes or feature changes |
 | `-SkipPackages` | Skip all manifests, including prerequisites; requires installed PowerShell 7 |
@@ -63,6 +63,39 @@ pwsh -NoProfile -File .\windows\Restore-Preferences.ps1 -BackupDirectory '<print
 ```
 
 To restore Terminal, close its settings editor, locate its current `settings.json` through Settings > Open JSON file, and replace that file with the backup. Restore multiple runs in reverse order when needed. App/font installation and optimizer changes are outside this preferences journal.
+
+## Before reinstalling Windows
+
+Setup configures Windows after installation. It does not upgrade the OS, prepare a USB installer, erase a disk or recover personal files. To target 26H2 explicitly, create installation media from [Microsoft's official Windows 11 download](https://www.microsoft.com/en-us/software-download/windows11) and select the edition matching your license. A reset using local recovery files should not be treated as a feature-version upgrade.
+
+Keep a verified backup on another device or external drive, separate from the installation USB and the disk being erased. Open representative files from it before proceeding. Keep secrets, inventories and application exports private; never commit them to this repository.
+
+| Save before wiping | Details |
+| --- | --- |
+| Personal files | Desktop, Documents, Downloads, pictures, videos, recordings, PDFs and custom folders on all relevant drives. Ensure cloud-only files are downloaded if you need an offline copy, and pending uploads have finished. |
+| Working projects | Uncommitted, untracked and ignored files, private repositories, local databases, `.env` files, scripts and assets. A Git remote does not contain everything in a working directory. |
+| Account recovery | Password-manager access, 2FA recovery codes and another working sign-in method. Check device-bound Windows Hello/passkeys before removing this installation. |
+| Encryption and keys | BitLocker recovery keys for every encrypted volume; SSH/GPG private keys if needed; EFS certificates with private keys if used. Save these encrypted outside the public repo. |
+| Browser state | Bookmarks, important tabs, extensions/settings and supported password-manager sync/export. Copying a profile does not guarantee that encrypted credentials or sessions work after reinstalling. |
+| App configuration | OBS Profiles and Scene Collections plus referenced media/plugins; Anki full `.colpkg` export with media; PowerToys settings backup; editor settings/extensions; Terminal JSON; PowerShell profiles and local assistant configuration. |
+| Games | Saves, mods, screenshots and settings. Verify cloud-save coverage per game; an existing game library is not necessarily a saves backup. |
+| Extra software | Paid-app licenses and an installation list for tools absent from the manifests. Codex desktop, VS Code, Neovim, Node.js, Python, games and hardware-specific drivers are not installed by this bootstrap. |
+| Optional Linux/VM data | Export any WSL data you still need. Shut down VMs before copying their complete disks, firmware state and required configuration. |
+
+For whole-system rollback, also create a system image and working rescue media. The preferences journal below cannot undo ReviOS or reconstruct your old Windows installation. Windows Backup/cloud sync can supplement your backup, but verify application-specific data separately.
+
+On the fresh installation:
+
+1. Boot official x64 26H2 installation media. Select your target by model/capacity and partitions; disk numbers can change. Disconnect backup drives and, where practical, other drives. Delete partitions only on the intended target after verifying the backup. This repo contains no automatic disk selection or wiping commands.
+2. Install the licensed Windows edition and complete its supported account setup. The optional answer file below sets locale/time-zone defaults only; it does not launch this bootstrap.
+3. Install needed network/chipset/graphics/audio drivers, Windows updates and Store/App Installer updates. Restart until no update restart is pending; verify internet access and activation.
+4. Install Git using `winget install --id Git.Git --exact --source winget`, reopen PowerShell, clone `https://github.com/raxl8/.dotfiles.git` and enter the checkout.
+5. Turn Tamper Protection off through Windows Security. Open elevated PowerShell as the same account, preview with `powershell -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1 -WhatIf`, then run the same command without `-WhatIf`. The preview is a plan, not a complete prerequisite check.
+6. Sign in after required reboots and approve installer UAC prompts. After completion, verify effective Defender protection and re-enable Tamper Protection. Restore personal files/app settings selectively and sign into apps.
+
+Default setup leaves WSL disabled and app accounts signed out. It installs the [listed apps](APPS.md), font, Terminal template and managed Windows preferences. It does not deploy every `.config/` or assistant configuration folder in the repository. Restore your private configuration separately. Choose Windows Terminal as the default terminal application in its Startup settings if desired.
+
+See [VM validation](TESTING.md) for test coverage: the combined flow completed on 26H2, but two QEMU firmware restarts needed host-side cold starts. Some apps were retained rather than freshly installed; physical hardware/drivers, app accounts/features and optional Start-pin behavior are outside the completed validation.
 
 ## Optional reinstall media
 
@@ -126,6 +159,13 @@ See [the VM validation results](TESTING.md) for the completed default combined f
 ## Sources
 
 - [Windows release information](https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information)
+- [Official Windows installation media](https://www.microsoft.com/en-us/software-download/windows11)
+- [Reinstalling Windows and matching the licensed edition](https://support.microsoft.com/en-us/windows/deployment/install-upgrade/reinstall-windows-with-the-installation-media)
+- [BitLocker recovery keys](https://support.microsoft.com/en-us/windows/security/encryption/find-your-bitlocker-recovery-key)
+- [Windows passkey management](https://support.microsoft.com/en-us/accounts-billing/security/manage-your-saved-passkeys)
+- [OBS Profiles](https://obsproject.com/kb/profiles) and [Scene Collections](https://obsproject.com/kb/scene-collections)
+- [Anki collection exports](https://github.com/ankitects/anki/blob/main/docs-site/manual/exporting.mdx)
+- [PowerToys settings backup](https://learn.microsoft.com/en-us/windows/powertoys/general)
 - [Configure Start Pins policy](https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-start#configurestartpins)
 - [Start layout and applyOnce](https://learn.microsoft.com/en-us/windows/configuration/start/layout)
 - [NixOS-WSL installation](https://nix-community.github.io/NixOS-WSL/install.html)

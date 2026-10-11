@@ -44,9 +44,35 @@ function Assert-ReviOSPlaybook {
     }
 }
 
+function Resolve-DotfilesReviOSPlaybook {
+    [CmdletBinding(SupportsShouldProcess)]
+    param([string]$Path, [Parameter(Mandatory)][hashtable]$Dependency)
+    if ($WhatIfPreference) {
+        [void]$PSCmdlet.ShouldProcess("ReviOS $($Dependency.Version)", 'Resolve local playbook or download the SHA256-verified release asset')
+        return
+    }
+    if ([string]::IsNullOrWhiteSpace($Path)) {
+        $local = Join-Path (Split-Path $PSScriptRoot -Parent) "downloads\ReviOS-$($Dependency.Version).apbx"
+        if (Test-Path -LiteralPath $local -PathType Leaf) { $Path = $local }
+        else {
+            $directory = Join-Path $env:LOCALAPPDATA 'dotfiles\installers'
+            $Path = Join-Path $directory "ReviOS-$($Dependency.Version).apbx"
+            if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+                if ($PSCmdlet.ShouldProcess($Path, 'Download pinned ReviOS playbook')) {
+                    New-Item -ItemType Directory -Path $directory -Force | Out-Null
+                    try { Save-VerifiedSetupDownload -Url $Dependency.Url -SHA256 $Dependency.SHA256 -Destination $Path }
+                    catch { throw "Automatic ReviOS download failed: $($_.Exception.Message) Download the pinned playbook through https://revi.cc/download and pass -ReviOSPlaybook '<path to .apbx>'." }
+                } else { return }
+            }
+        }
+    }
+    Assert-ReviOSPlaybook -Path $Path -Dependency $Dependency
+    return $Path
+}
+
 function Start-DotfilesReviOS {
     [CmdletBinding(SupportsShouldProcess)]
-    param([Parameter(Mandatory)][string]$PlaybookPath,
+    param([string]$PlaybookPath,
           [Parameter(Mandatory)][hashtable]$Dependency,
           [Parameter(Mandatory)][hashtable]$WizardDependency)
     $info = Get-WindowsSetupInfo
@@ -55,7 +81,7 @@ function Start-DotfilesReviOS {
         [void]$PSCmdlet.ShouldProcess("ReviOS $($Dependency.Version)", 'Verify playbook, download verified AME Wizard, launch interactive installation')
         return
     }
-    Assert-ReviOSPlaybook -Path $PlaybookPath -Dependency $Dependency
+    $PlaybookPath = Resolve-DotfilesReviOSPlaybook -Path $PlaybookPath -Dependency $Dependency
     if ($PSCmdlet.ShouldProcess("ReviOS $($Dependency.Version)", 'Launch AME Wizard for interactive installation')) {
         # Keep downloads out of TEMP: an optimization playbook may empty it or reboot.
         $directory = Join-Path $env:LOCALAPPDATA 'dotfiles\installers'
@@ -177,7 +203,7 @@ function Assert-ReviOSCompletion {
 
 function Install-DotfilesReviOS {
     [CmdletBinding(SupportsShouldProcess)]
-    param([Parameter(Mandatory)][string]$PlaybookPath, [Parameter(Mandatory)][hashtable]$Dependency,
+    param([string]$PlaybookPath, [Parameter(Mandatory)][hashtable]$Dependency,
           [Parameter(Mandatory)][hashtable]$CLIDependency, [Parameter(Mandatory)][string]$OptionsPath)
     $info = Get-WindowsSetupInfo
     if ($info.Build -notin $Dependency.Builds) { throw "ReviOS $($Dependency.Version) does not declare support for build $($info.Build)." }
@@ -186,7 +212,7 @@ function Install-DotfilesReviOS {
         [void]$PSCmdlet.ShouldProcess("ReviOS $($Dependency.Version)", 'Verify dependencies and requirements, apply pinned playbook automatically with Defender enabled, verify installed packages')
         return $false
     }
-    Assert-ReviOSPlaybook -Path $PlaybookPath -Dependency $Dependency
+    $PlaybookPath = Resolve-DotfilesReviOSPlaybook -Path $PlaybookPath -Dependency $Dependency
     Assert-ReviOSAutomaticRequirements
     if (-not $PSCmdlet.ShouldProcess("ReviOS $($Dependency.Version)", 'Apply verified playbook automatically with Defender enabled')) { return $false }
     $options = Get-ReviOSOptions -Path $OptionsPath
@@ -633,4 +659,4 @@ Export-ModuleMember -Function Get-WindowsSetupInfo, Assert-WindowsSetupSupport, 
     Invoke-SetupNative, Save-VerifiedSetupDownload, Remove-SetupTemporaryDirectory, Install-DotfilesPackages,
     Install-DotfilesFont, Merge-SetupObject, Set-DotfilesTerminal, Set-DotfilesPreferences,
     Set-DotfilesStartLayout, Enable-DotfilesWSL, Assert-WSLVersion, Install-DotfilesWSL,
-    Assert-ReviOSPlaybook, Start-DotfilesReviOS, Install-DotfilesReviOS, Get-SetupPowerShell7, Invoke-DotfilesUserContinuation
+    Assert-ReviOSPlaybook, Resolve-DotfilesReviOSPlaybook, Start-DotfilesReviOS, Install-DotfilesReviOS, Get-SetupPowerShell7, Invoke-DotfilesUserContinuation

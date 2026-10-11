@@ -89,6 +89,57 @@ Describe 'Default ReviOS workflow' {
     }
 }
 
+Describe 'Automatic playbook download' {
+    InModuleScope Dotfiles.Windows {
+        BeforeEach {
+            $script:originalLocalAppData = $env:LOCALAPPDATA
+            $env:LOCALAPPDATA = Join-Path $TestDrive ([guid]::NewGuid().ToString())
+            $script:sample = Join-Path $TestDrive 'sample.apbx'
+            'trusted sample' | Set-Content $sample
+            $script:dependency = @{ Version = 'test'; SHA256 = (Get-FileHash $sample).Hash; Url = 'https://example.invalid/playbook.apbx'; ReleaseUrl = 'https://example.invalid/release' }
+            Mock Save-VerifiedSetupDownload { Copy-Item -LiteralPath $script:sample -Destination $Destination }
+        }
+        AfterEach { $env:LOCALAPPDATA = $script:originalLocalAppData }
+        It 'downloads and verifies the pinned asset when no path or cache exists' {
+            $path = Resolve-DotfilesReviOSPlaybook -Dependency $dependency
+            (Get-FileHash $path).Hash | Should -Be $dependency.SHA256
+            Should -Invoke Save-VerifiedSetupDownload -Times 1 -Exactly -ParameterFilter { $Url -eq $dependency.Url -and $SHA256 -eq $dependency.SHA256 }
+        }
+        It 'reuses the verified cache without another download' {
+            $path = Resolve-DotfilesReviOSPlaybook -Dependency $dependency
+            Resolve-DotfilesReviOSPlaybook -Dependency $dependency | Should -Be $path
+            Should -Invoke Save-VerifiedSetupDownload -Times 1 -Exactly
+        }
+        It 'uses an explicit verified file without downloading' {
+            Resolve-DotfilesReviOSPlaybook -Path $sample -Dependency $dependency | Should -Be $sample
+            Should -Invoke Save-VerifiedSetupDownload -Times 0
+        }
+        It 'does not replace a missing explicit file with a download' {
+            { Resolve-DotfilesReviOSPlaybook -Path (Join-Path $TestDrive 'missing.apbx') -Dependency $dependency } | Should -Throw '*Download ReviOS*'
+            Should -Invoke Save-VerifiedSetupDownload -Times 0
+        }
+        It 'rejects a corrupt cache instead of using it' {
+            $path = Resolve-DotfilesReviOSPlaybook -Dependency $dependency
+            'corrupt' | Set-Content $path
+            { Resolve-DotfilesReviOSPlaybook -Dependency $dependency } | Should -Throw '*does not match pinned*'
+            Should -Invoke Save-VerifiedSetupDownload -Times 1 -Exactly
+        }
+        It 'rejects a downloaded file with the wrong checksum' {
+            Mock Save-VerifiedSetupDownload { 'corrupt' | Set-Content $Destination }
+            { Resolve-DotfilesReviOSPlaybook -Dependency $dependency } | Should -Throw '*does not match pinned*'
+        }
+        It 'reports download failure with the local-file recovery command' {
+            Mock Save-VerifiedSetupDownload { throw 'HTTP 403' }
+            { Resolve-DotfilesReviOSPlaybook -Dependency $dependency } | Should -Throw '*Automatic ReviOS download failed*ReviOSPlaybook*'
+        }
+        It 'previews without creating a cache or downloading' {
+            Resolve-DotfilesReviOSPlaybook -Dependency $dependency -WhatIf
+            Should -Invoke Save-VerifiedSetupDownload -Times 0
+            Test-Path (Join-Path $env:LOCALAPPDATA 'dotfiles\installers') | Should -BeFalse
+        }
+    }
+}
+
 Describe 'Native command errors' {
     It 'fails on nonzero exit codes instead of continuing setup' {
         { Invoke-SetupNative -FilePath (Join-Path $PSHOME 'pwsh.exe') -ArgumentList @('-NoProfile', '-Command', 'exit 7') } | Should -Throw '*exit code 7*'

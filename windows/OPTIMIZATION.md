@@ -5,16 +5,18 @@ Windows setup uses pinned **ReviOS 26.10** and **AME CLI 0.8.4**. ReviOS support
 ## Automatic application
 
 1. Install Windows/Store updates and restart. Use a stock Windows installation; ReviOS describes conversion of long-used installations as experimental.
-2. Download **ReviOS 26.10** from [Revision](https://revi.cc/download). Save it to `windows/downloads/ReviOS-26.10.apbx` or pass its location.
+2. Setup downloads **ReviOS 26.10** automatically from [this repository's release asset](https://github.com/raxl8/.dotfiles/releases/tag/revios-26.10). This is an unmodified copy of the upstream playbook, with attribution/license/source links in the release. Its hash must match [Revision's published 26.10 checksum](https://github.com/meetrevision/playbook/releases/tag/26.10). Revision's own download uses a browser-facing file host rather than a GitHub binary asset.
 3. Turn off Tamper Protection in Windows Security as required by AME.
 4. Start elevated 64-bit PowerShell as your own Windows account:
    ```powershell
    powershell -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1 -WhatIf
-   powershell -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1 -ReviOSPlaybook 'C:\Downloads\ReviOS.apbx'
+   powershell -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1
    ```
 5. Sign in after each required restart. Setup resumes automatically, applies ReviOS and installs personal apps/settings without elevation. After completion, check Windows Security and re-enable Tamper Protection.
 
 Setup verifies download hashes, build compatibility, playbook options, update/restart status, antivirus and AC-power prerequisites. If UCPD is running, its driver/task preparation requires a reboot before playbook application. Temporary Defender preferences are saved and reapplied on success or ordinary failure; ReviOS policies can override their effective values. Application success requires exit zero, the CLI's completion message and installed/pending ReviOS packages.
+
+Without `-ReviOSPlaybook`, setup first accepts `windows/downloads/ReviOS-26.10.apbx` if present, then uses/downloads `%LOCALAPPDATA%\dotfiles\installers\ReviOS-26.10.apbx`. Explicit local files and cached files are verified too. A wrong hash stops setup; it is never silently ignored or overwritten. Delete a corrupt cache only after investigating it, then retry. A failed download stops before applying ReviOS and reports the manual fallback: download the pinned version through [Revision](https://revi.cc/download) and rerun with `-ReviOSPlaybook '<path to .apbx>'`. Preview does not download anything. Release assets and local downloads stay outside Git history.
 
 Use `-NoRestart` for manual reboots or `-Stage ReviOS` to apply only the playbook. The individual ReviOS stage returns `3010` when you must restart and rerun it. See [setup options and continuation recovery](README.md).
 

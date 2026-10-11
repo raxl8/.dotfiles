@@ -1,1 +1,0 @@
-$env:PSModulePath += ";$PSScriptRoot\Modules"

@@ -1,91 +1,136 @@
-# note: can't use %temp% because atlas will delete it during installation
-$tempDir = Join-Path -Path $env:SystemDrive -ChildPath $([System.Guid]::NewGuid())
-New-Item -Force -ItemType Directory -Path $tempDir | Out-Null
-Push-Location $tempDir
-
-# Download faster plz
-$ProgressPreference = 'SilentlyContinue'
-
-# Download 7zip to extract 7zip :)
-# (7zr can't extract archive with password)
-Write-Host "Downloading 7zip..."
-
-$url = "https://github.com/ip7z/7zip/releases/download/24.09/7zr.exe"
-Invoke-WebRequest -Uri $url -OutFile .\7zr.exe
-
-$url = "https://github.com/ip7z/7zip/releases/download/24.09/7z2409-extra.7z"
-Invoke-WebRequest -Uri $url -OutFile .\7zip.7z
-.\7zr.exe -y x 7zip.7z -o7zip | Out-Null
-Remove-Item -Force .\7zip.7z
-
-Remove-Item -Force .\7zr.exe
-
-$7zipPath = ".\7zip\x64\7za.exe"
-
-Write-Host "Downloading ReviOS playbook..."
-
-$url = "https://github.com/meetrevision/playbook/releases/download/25.10/Revi-PB-25.10.apbx"
-Invoke-WebRequest -Uri $url -OutFile .\playbook.apbx
-& $7zipPath -y x playbook.apbx -oplaybook -pmalte | Out-Null
-Remove-Item -Force .\playbook.apbx
-
-Write-Host "Downloading TrustedUninstaller..."
-
-$url = "https://github.com/Ameliorated-LLC/trusted-uninstaller-cli/releases/download/0.8.1/CLI-Standalone.zip"
-Invoke-WebRequest -Uri $url -OutFile .\trusted-uninstaller.zip
-& $7zipPath -y x trusted-uninstaller.zip -oTrustedUninstaller | Out-Null
-Remove-Item -Force .\trusted-uninstaller.zip
-
-Remove-Item -Force .\7zip -Recurse
-
-Write-Host "Installing Atlas playbook..."
-
-$playbookOptions = @(
-  "enable-defender"
-  "disable-hibernate"
-  "remove-edge"
-  "remove-onedrive"
-  "remove-winsxs-ai"
-  "remove-teams"
-  "remove-appx-photos"
-  "remove-appx-devhome"
-  "remove-appx-xbox"
-  "remove-appx-yourphone"
-  "configure-darkmode"
-  "configure-lcm"
-  "remove-pinned-items-startmenu"
-  "disable-automatic-maintenance"
+#Requires -Version 5.1
+<#
+.SYNOPSIS
+    Apply ReviOS and personal setup, continuing automatically after required reboots.
+.EXAMPLE
+    .\setup.ps1 -WhatIf
+.EXAMPLE
+    .\setup.ps1 -Stage Machine -InstallWSL
+.EXAMPLE
+    .\setup.ps1 -Stage User -InstallWSL
+#>
+[CmdletBinding(SupportsShouldProcess)]
+param(
+    [ValidateSet('All', 'ReviOS', 'User', 'Machine')][string]$Stage = 'All',
+    [string]$ReviOSPlaybook,
+    [switch]$InteractiveReviOS,
+    [switch]$InstallWSL,
+    [switch]$ApplyStartLayout,
+    [switch]$SkipPackages,
+    [switch]$SkipEverydayApps,
+    [switch]$IncludeGamingTools,
+    [switch]$SkipFont,
+    [switch]$SkipTerminal,
+    [switch]$SkipPreferences,
+    [switch]$SkipReviOS,
+    [switch]$NoRestart,
+    [ValidatePattern('^[a-zA-Z0-9][a-zA-Z0-9._-]*$')][string]$DistroName = 'NixOS',
+    [string]$WSLLocation = (Join-Path $env:LOCALAPPDATA 'WSL\NixOS')
 )
-.\TrustedUninstaller\TrustedUninstaller.CLI.exe "$((Resolve-Path .\playbook).Path)" @playbookOptions
-
-Remove-Item -Force .\playbook -Recurse
-
-Pop-Location
-
-Write-Host "Installing WSL..."
-
-wsl.exe --install --no-distribution
-
-Write-Host "Installing scheduled task to run playbook on boot..."
-
-$customPlaybookPath = (Resolve-Path .\windows\playbook).Path
-$installPlaybookPath = (Resolve-Path .\windows\installPlaybook.ps1).Path
-$taskTitle = "InstallPlaybook"
-$taskArgs = "/c schtasks /delete /tn `"$taskTitle`" /f > nul & " + `
-    "powershell.exe -NoProfile -ExecutionPolicy Bypass " + `
-    "-Command `"& '$installPlaybookPath' '$tempDir' '$customPlaybookPath'`""
-$task = @{
-  "TaskName" = $taskTitle
-  "Settings" = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
-  "Trigger" = New-ScheduledTaskTrigger -AtLogOn
-  "User" = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
-  "Force" = $true
-  "RunLevel" = "Highest"
-  "Action" = New-ScheduledTaskAction -Execute "cmd.exe" -Argument $taskArgs
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+if ([string]::IsNullOrWhiteSpace($ReviOSPlaybook)) {
+    $ReviOSPlaybook = Join-Path $PSScriptRoot 'windows\downloads\ReviOS-26.10.apbx'
 }
-Register-ScheduledTask @task | Out-Null
-
-Write-Host "First step of setup done, computer will now reboot, press any key to continue" -ForegroundColor Green
-Read-Host
-
-Restart-Computer -Force
+Import-Module (Join-Path $PSScriptRoot 'windows\Modules\Dotfiles.Windows.psm1') -Force
+$configRoot = Join-Path $PSScriptRoot 'windows\config'
+# Forward WhatIf explicitly: modules can inherit an invoking script's preferences.
+try {
+    if ($Stage -eq 'All') {
+        if ($InteractiveReviOS) { throw 'Use -Stage ReviOS -InteractiveReviOS for the optional wizard.' }
+        $automatic = @{}
+        foreach ($entry in $PSBoundParameters.GetEnumerator()) {
+            if ($entry.Key -ne 'Stage' -and $entry.Key -ne 'InteractiveReviOS') { $automatic[$entry.Key] = $entry.Value }
+        }
+        & (Join-Path $PSScriptRoot 'windows\Install-Windows.ps1') @automatic
+        exit $LASTEXITCODE
+    }
+    if ($SkipReviOS -or $NoRestart) { throw '-SkipReviOS and -NoRestart belong to the automatic All stage.' }
+    $dependencies = Import-PowerShellDataFile (Join-Path $configRoot 'dependencies.psd1')
+    $windows = Get-WindowsSetupInfo
+    Assert-WindowsSetupSupport -Info $windows -InstallWSL:$InstallWSL
+    Write-Host "Windows $($windows.DisplayVersion) (build $($windows.Build)), stage: $Stage"
+    if ($Stage -eq 'ReviOS') {
+        if ($InstallWSL -or $ApplyStartLayout -or $SkipPackages -or $SkipEverydayApps -or $IncludeGamingTools -or $SkipFont -or $SkipTerminal -or $SkipPreferences) {
+            throw 'Personal setup switches belong to -Stage User or -Stage Machine. ReviOS setup runs first.'
+        }
+        if ($InteractiveReviOS) {
+            Start-DotfilesReviOS -PlaybookPath $ReviOSPlaybook -Dependency $dependencies.ReviOS -WizardDependency $dependencies.AME -WhatIf:$WhatIfPreference
+        } else {
+            $result = Install-DotfilesReviOS -PlaybookPath $ReviOSPlaybook -Dependency $dependencies.ReviOS -CLIDependency $dependencies.AMECLI -OptionsPath (Join-Path $configRoot 'revios-options.json') -WhatIf:$WhatIfPreference
+            if ($result -eq 'PreparationRestart') {
+                Write-Host 'AME preparation staged. Restart Windows and rerun this ReviOS command with the same options. The playbook has not been applied yet.'
+                exit 3010
+            }
+            if ($result -eq 'AppliedRestart') {
+                Write-Host 'ReviOS applied. Restart Windows to finalize its packages, then run .\setup.ps1 -Stage User for your apps and settings.'
+                exit 3010
+            }
+        }
+        exit 0
+    }
+    if ($InteractiveReviOS) { throw '-InteractiveReviOS belongs to the ReviOS stage.' }
+    if ($Stage -eq 'Machine') {
+        if (-not $InstallWSL) {
+            Write-Host 'No machine changes requested. WSL is opt-in with -InstallWSL.'
+            exit 0
+        }
+        if (-not $WhatIfPreference -and -not (Test-SetupAdministrator)) {
+            throw 'Run the Machine stage in an elevated PowerShell window.'
+        }
+        $restartRequired = Enable-DotfilesWSL -WhatIf:$WhatIfPreference
+        if ($restartRequired) {
+            Write-Host 'Restart Windows, then rerun the Machine stage before running the User stage with -InstallWSL.'
+            exit 3010
+        }
+        if ($WhatIfPreference) { Write-Host 'WSL preparation preview complete. No changes were applied.' }
+        else { Write-Host 'WSL prepared. Run .\setup.ps1 -Stage User -InstallWSL as your normal Windows user.' }
+        exit 0
+    }
+    if (Test-SetupAdministrator) {
+        Write-Warning 'User stage is elevated. Use your normal Windows account; do not run as a different administrator.'
+    }
+    if (-not $SkipPackages) {
+        $restartRequired = Install-DotfilesPackages -ManifestPath (Join-Path $configRoot 'essentials.json') -WhatIf:$WhatIfPreference
+        if ($restartRequired) {
+            Write-Host 'A package requires a restart. Restart Windows, then rerun this command with the same options.'
+            exit 3010
+        }
+    }
+    if ($PSVersionTable.PSVersion.Major -lt 7 -and -not $WhatIfPreference) {
+        # WinGet works in Windows PowerShell; install prerequisites before requiring pwsh.
+        $powerShell = Get-SetupPowerShell7
+        exit (Invoke-DotfilesUserContinuation -PowerShellPath $powerShell -ScriptPath $PSCommandPath -Parameters $PSBoundParameters)
+    }
+    if ($InstallWSL -and -not $WhatIfPreference) { Assert-WSLVersion }
+    $backupDirectory = Join-Path (Join-Path $env:LOCALAPPDATA 'dotfiles\backups') ([guid]::NewGuid().ToString())
+    if (-not $SkipPackages) {
+        $manifests = @('packages.json')
+        if (-not $SkipEverydayApps) { $manifests += 'everyday-apps.json' }
+        if ($IncludeGamingTools) { $manifests += 'gaming-tools.json' }
+        foreach ($manifest in $manifests) {
+            if (Install-DotfilesPackages -ManifestPath (Join-Path $configRoot $manifest) -WhatIf:$WhatIfPreference) {
+                Write-Host 'A package requires a restart. Restart Windows, then rerun this command with the same options.'
+                exit 3010
+            }
+        }
+    }
+    if (-not $SkipFont) { Install-DotfilesFont -Dependency $dependencies.Font -WhatIf:$WhatIfPreference }
+    if (-not $SkipTerminal) {
+        Set-DotfilesTerminal -TemplatePath (Join-Path $configRoot 'terminal.json') -BackupDirectory $backupDirectory -WhatIf:$WhatIfPreference
+    }
+    if (-not $SkipPreferences) { Set-DotfilesPreferences -BackupDirectory $backupDirectory -WhatIf:$WhatIfPreference }
+    if ($ApplyStartLayout) {
+        Set-DotfilesStartLayout -LayoutPath (Join-Path $configRoot 'start-layout.json') -Info $windows -BackupDirectory $backupDirectory -WhatIf:$WhatIfPreference
+    }
+    if ($InstallWSL) {
+        Install-DotfilesWSL -Dependency $dependencies.WSL -Name $DistroName -Location $WSLLocation -WhatIf:$WhatIfPreference
+    }
+    if ($WhatIfPreference) { Write-Host 'Preview complete. No setup changes were applied.' }
+    else { Write-Host 'Setup complete. Sign out and back in to refresh shell preferences.' }
+    if (Test-Path -LiteralPath $backupDirectory) { Write-Host "Settings backup: $backupDirectory" }
+    exit 0
+} catch {
+    Write-Error -Message $_.Exception.Message -ErrorAction Continue
+    exit 1
+}

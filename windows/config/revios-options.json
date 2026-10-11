@@ -1,0 +1,15 @@
+[
+  "enable-defender",
+  "disable-hibernate",
+  "remove-edge",
+  "remove-onedrive",
+  "remove-winsxs-ai",
+  "remove-teams",
+  "remove-appx-photos",
+  "remove-appx-devhome",
+  "remove-appx-xbox",
+  "remove-appx-yourphone",
+  "configure-darkmode",
+  "configure-lcm",
+  "remove-pinned-items-startmenu"
+]

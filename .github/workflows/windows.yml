@@ -1,0 +1,40 @@
+name: Windows setup checks
+on:
+  push:
+    paths: ['setup.ps1', 'windows/**', 'tests/**', '.github/workflows/windows.yml']
+  pull_request:
+    paths: ['setup.ps1', 'windows/**', 'tests/**', '.github/workflows/windows.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Install test tools
+        shell: pwsh
+        run: |
+          Install-Module Pester -RequiredVersion 5.7.1 -Scope CurrentUser -Force -SkipPublisherCheck
+          Install-Module PSScriptAnalyzer -RequiredVersion 1.24.0 -Scope CurrentUser -Force
+      - name: Analyze PowerShell
+        shell: pwsh
+        run: |
+          $files = @('setup.ps1') + @(Get-ChildItem windows -Recurse -File -Include *.ps1,*.psm1 | ForEach-Object FullName)
+          $issues = @($files | ForEach-Object { Invoke-ScriptAnalyzer -Path $_ -Severity Error })
+          $issues | Format-Table -AutoSize
+          if ($issues.Count) { throw 'PowerShell analysis failed.' }
+      - name: Test behavior without applying setup
+        shell: pwsh
+        run: |
+          Import-Module Pester -RequiredVersion 5.7.1
+          Invoke-Pester -Path tests -CI
+      - name: Parse with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $files = @('setup.ps1') + @(Get-ChildItem windows -Recurse -File -Include *.ps1,*.psm1,*.psd1 | ForEach-Object FullName)
+          foreach ($file in $files) {
+            $tokens = $null; $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $file), [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors) { throw ($errors | Out-String) }
+          }

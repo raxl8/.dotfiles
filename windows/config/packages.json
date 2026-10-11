@@ -1,20 +1,16 @@
 {
   "$schema": "https://aka.ms/winget-packages.schema.2.0.json",
-  "CreationDate": "2025-01-01T19:56:56.526-00:00",
   "Sources": [
     {
       "Packages": [
         {
-          "PackageIdentifier": "Microsoft.PowerShell"
+          "PackageIdentifier": "Devolutions.UniGetUI"
         },
         {
           "PackageIdentifier": "Valve.Steam"
         },
         {
           "PackageIdentifier": "Discord.Discord"
-        },
-        {
-          "PackageIdentifier": "MartiCliment.UniGetUI"
         }
       ],
       "SourceDetails": {
@@ -24,6 +20,5 @@
         "Type": "Microsoft.PreIndexed.Package"
       }
     }
-  ],
-  "WinGetVersion": "1.9.25200"
+  ]
 }

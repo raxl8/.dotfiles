@@ -39,6 +39,3 @@ enabled = true
 
 [plugins."chrome@openai-bundled"]
 enabled = true
-
-[projects."/Users/alex/git/.dotfiles"]
-trust_level = "trusted"

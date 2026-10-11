@@ -4,7 +4,6 @@
     "extensions.ignoreRecommendations": true,
     "git.openRepositoryInParentFolders": "never",
     "explorer.confirmDelete": false,
-    "python.defaultInterpreterPath": "/Users/alex/.local/share/mise/installs/python/3.14.2/bin/python",
     "git.enableSmartCommit": true,
     "extensions.experimental.affinity": {
         "asvetliakov.vscode-neovim": 1
